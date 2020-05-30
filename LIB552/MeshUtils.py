@@ -55,7 +55,7 @@ def mesh_to_ugrid(mesh):
             mesh.cells_nodes.astype(numpy.int))).flatten()
         mesh.cells_nodes[:,[3,2]] = mesh.cells_nodes[:,[2,3]] # MG 20200517: VTK does not use lexicographic ordering for quadrangles
     else:
-        assert(0), "Not implemented. Aborting."
+        assert (0), "Not implemented. Aborting."
     cell_array = vtk.vtkCellArray()
     cell_array.SetCells(mesh.n_cells, vtk.util.numpy_support.numpy_to_vtkIdTypeArray(connectivity))
     ugrid.SetCells(cell_vtk_type, cell_array)
@@ -137,7 +137,7 @@ def field_to_ugrid(field, mesh, dof_manager, field_name=None):
     elif (mesh.cell.cell_type == "Hexahedron"):
         cell_vtk_type = vtk.VTK_HEXA
     else:
-        assert(0), "Not implemented. Aborting."
+        assert (0), "Not implemented. Aborting."
     connectivity = numpy.hstack((
         numpy.full((mesh.n_cells, 1), mesh.cell.n_nodes, dtype=numpy.int),
         mesh.cells_nodes.astype(numpy.int))).flatten()

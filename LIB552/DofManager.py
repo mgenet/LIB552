@@ -116,7 +116,7 @@ class DofManager():
                     self.local_to_global[k_cell, k_cell_dof] = self.n_dofs; self.n_dofs += 1
                 else:
                     assert (0)
-            assert((n_dofs_already_attached_to_cell_nodes == self.finite_element.get_n_dofs_attached_to_each_node()).all())
+            assert ((n_dofs_already_attached_to_cell_nodes == self.finite_element.get_n_dofs_attached_to_each_node()).all())
 
     def set_connectivity(self):
         """
@@ -168,8 +168,8 @@ class DofManager():
                     self.local_to_global[k_cell, k_cell_dof] = self.n_dofs; self.n_dofs += 1
                 else:
                     assert (0)
-            assert((n_dofs_already_attached_to_cell_nodes == self.finite_element.get_n_dofs_attached_to_each_node()).all())
-            assert((n_dofs_already_attached_to_cell_edges == self.finite_element.get_n_dofs_attached_to_each_edge()).all())
+            assert ((n_dofs_already_attached_to_cell_nodes == self.finite_element.get_n_dofs_attached_to_each_node()).all())
+            assert ((n_dofs_already_attached_to_cell_edges == self.finite_element.get_n_dofs_attached_to_each_edge()).all())
 
     def get_cell_dofs_idx(self, k_cell):
         """Returns the idx of the dofs of a given cell."""

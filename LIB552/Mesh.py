@@ -37,7 +37,7 @@ class Cell_Vertex(Cell):
     n_edges = 0
 
     def get_volume(self, nodes):
-        assert(len(nodes) == self.n_nodes)
+        assert (len(nodes) == self.n_nodes)
         return 0.
 
 
@@ -47,7 +47,7 @@ class Cell_Line(Cell):
     n_edges = 0
 
     def get_volume(self, nodes):
-        assert(len(nodes) == self.n_nodes)
+        assert (len(nodes) == self.n_nodes)
         return numpy.linalg.norm(nodes[1]-nodes[0])
 
 
@@ -57,7 +57,7 @@ class Cell_Triangle(Cell):
     n_edges = 3
 
     def get_volume(self, nodes):
-        assert(len(nodes) == self.n_nodes)
+        assert (len(nodes) == self.n_nodes)
         return numpy.linalg.norm(numpy.cross(nodes[1]-nodes[0], nodes[2]-nodes[0]))
 
     def get_edge_nodes(self, k_edge):
@@ -70,7 +70,7 @@ class Cell_Quadrangle(Cell):
     n_edges = 4
 
     def get_volume(self, nodes):
-        assert(len(nodes) == self.n_nodes)
+        assert (len(nodes) == self.n_nodes)
         return numpy.linalg.norm(numpy.cross(nodes[2]-nodes[0], nodes[3]-nodes[1]))
 
     def get_edge_nodes(self, k_edge):
@@ -108,13 +108,13 @@ class Mesh:
     def __init__(self, dim, nodes, cell, cells_nodes):
         assert (dim in (1,2))
         self.dim = dim
-        assert(nodes.ndim == 2)
-        assert(nodes.shape[1] == self.dim)
+        assert (nodes.ndim == 2)
+        assert (nodes.shape[1] == self.dim)
         self.nodes = nodes
         self.n_nodes = self.nodes.shape[0]
         self.cell = cell
-        assert(cells_nodes.ndim == 2)
-        assert(cells_nodes.shape[1] == self.cell.n_nodes)
+        assert (cells_nodes.ndim == 2)
+        assert (cells_nodes.shape[1] == self.cell.n_nodes)
         self.cells_nodes = cells_nodes
         self.n_cells = self.cells_nodes.shape[0]
 

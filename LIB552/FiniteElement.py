@@ -107,8 +107,8 @@ class FiniteElement():
             sympy.derive_by_array(
                 self.sym_phi,
                 self.sym_x))
+        # self.sym_dphi = sympy.Array([[phi.diff(xi) for xi in self.sym_x] for phi in self.sym_phi])
         assert (self.sym_dphi.shape == (self.n_dofs, self.dim))
-        # self.sym_dphi = sympy.Array([[phij.diff(xi) for phij in self.sym_phi] for xi in self.sym_x])
 
     def _init_sym_ddphi(self):
         """Computes the (symbolic) second derivatives of the shape functions, and store them as a (n_dofs x dim x dim) sympy Array."""
@@ -119,8 +119,8 @@ class FiniteElement():
                 self.sym_dphi,
                 self.sym_x),
             (1, 2, 0))
+        # self.sym_ddphi = sympy.Array([[[phi.diff(xi).diff(xj) for xj in self.sym_x] for xi in self.sym_x] for phi in self.sym_phi])
         assert (self.sym_ddphi.shape == (self.n_dofs, self.dim, self.dim))
-        # self.sym_ddphi = sympy.Array([[[phik.diff(xi).diff(xj) for phik in self.sym_phi] for xj in self.sym_x] for xi in self.sym_x])
 
     def _init_sym_phi_phi(self):
         """Computes the (symbolic) product of shape functions, and store them as a (n_dofs x n_dofs) sympy Array."""
@@ -128,8 +128,8 @@ class FiniteElement():
         self.sym_phi_phi = sympy.tensorproduct(
             self.sym_phi,
             self.sym_phi)
-        assert (self.sym_phi_phi.shape == (self.n_dofs, self.n_dofs))
         # self.sym_phi_phi = sympy.Array([[phik*phil for phil in self.sym_phi] for phik in self.sym_phi])
+        assert (self.sym_phi_phi.shape == (self.n_dofs, self.n_dofs))
 
     def _init_sym_dphi_dphi(self):
         """Computes the (symbolic) product of shape functions derivatives, and store them as a (n_dofs x n_dofs) sympy Array."""
@@ -167,7 +167,6 @@ class FiniteElement():
                 self.sym_phi),
             (1,)))/2
         assert (self.sym_phi_dphi_dphi_phi.shape == (self.n_dofs, self.n_dofs))
-        # self.sym_phi_dphi_dphi_phi = (self.sym_phi * self.sym_dphi.T + self.sym_dphi * self.sym_phi.T)/2
 
     def init_get_phi_int(self, n=0):
         """Initializes the (efficient) computation of the shape functions element integral."""
@@ -269,11 +268,11 @@ class FiniteElement_Line(FiniteElement_1D):
         Args:
             n (uint): The power of the spatial variable.
         """
-        assert(self.sym_phi.shape == (self.n_dofs,))
+        assert (self.sym_phi.shape == (self.n_dofs,))
         self.sym_phi_int = sympy.Array([sympy.integrate(
             self.sym_phi[i] * self.sym_x[0]**n,
             (self.sym_x[0], self.sym_nodes[0,0], self.sym_nodes[1,0])) for i in range(self.n_dofs)])
-        assert(self.sym_phi_int.shape == (self.n_dofs,))
+        assert (self.sym_phi_int.shape == (self.n_dofs,))
 
     def _init_sym_phi_phi_int(self, n=0):
         """
@@ -284,14 +283,14 @@ class FiniteElement_Line(FiniteElement_1D):
         Args:
             n (uint): The power of the spatial variable.
         """
-        assert(self.sym_phi_phi.shape == (self.n_dofs, self.n_dofs))
+        assert (self.sym_phi_phi.shape == (self.n_dofs, self.n_dofs))
         self.sym_phi_phi_int = sympy.Array(
             [[sympy.integrate(
                 self.sym_phi_phi[i,j] * self.sym_x[0]**n,
                 (self.sym_x[0], self.sym_nodes[0,0], self.sym_nodes[1,0])) \
             for j in range(self.n_dofs)] \
             for i in range(self.n_dofs)])
-        assert(self.sym_phi_phi_int.shape == (self.n_dofs, self.n_dofs))
+        assert (self.sym_phi_phi_int.shape == (self.n_dofs, self.n_dofs))
 
     def _init_sym_dphi_dphi_int(self, n=0):
         """
@@ -302,14 +301,14 @@ class FiniteElement_Line(FiniteElement_1D):
         Args:
             n (uint): The power of the spatial variable.
         """
-        assert(self.sym_dphi_dphi.shape == (self.n_dofs, self.n_dofs))
+        assert (self.sym_dphi_dphi.shape == (self.n_dofs, self.n_dofs))
         self.sym_dphi_dphi_int = sympy.Array(
             [[sympy.integrate(
                 self.sym_dphi_dphi[i,j] * self.sym_x[0]**n,
                 (self.sym_x[0], self.sym_nodes[0,0], self.sym_nodes[1,0])) \
             for j in range(self.n_dofs)] \
             for i in range(self.n_dofs)])
-        assert(self.sym_dphi_dphi_int.shape == (self.n_dofs, self.n_dofs))
+        assert (self.sym_dphi_dphi_int.shape == (self.n_dofs, self.n_dofs))
 
     def _init_sym_ddphi_ddphi_int(self, n=0):
         """
@@ -320,14 +319,14 @@ class FiniteElement_Line(FiniteElement_1D):
         Args:
             n (uint): The power of the spatial variable.
         """
-        assert(self.sym_ddphi_ddphi.shape == (self.n_dofs, self.n_dofs))
+        assert (self.sym_ddphi_ddphi.shape == (self.n_dofs, self.n_dofs))
         self.sym_ddphi_ddphi_int = sympy.Array(
             [[sympy.integrate(
                 self.sym_ddphi_ddphi[i,j] * self.sym_x[0]**n,
                 (self.sym_x[0], self.sym_nodes[0,0], self.sym_nodes[1,0])) \
             for j in range(self.n_dofs)] \
             for i in range(self.n_dofs)])
-        assert(self.sym_ddphi_ddphi_int.shape == (self.n_dofs, self.n_dofs))
+        assert (self.sym_ddphi_ddphi_int.shape == (self.n_dofs, self.n_dofs))
 
     def _init_sym_phi_dphi_dphi_phi_int(self, n=0):
         """
@@ -338,14 +337,14 @@ class FiniteElement_Line(FiniteElement_1D):
         Args:
             n (uint): The power of the spatial variable.
         """
-        assert(self.sym_phi_dphi_dphi_phi.shape == (self.n_dofs, self.n_dofs))
+        assert (self.sym_phi_dphi_dphi_phi.shape == (self.n_dofs, self.n_dofs))
         self.sym_phi_dphi_dphi_phi_int = sympy.Array(
             [[sympy.integrate(
                 self.sym_phi_dphi_dphi_phi[i,j] * self.sym_x[0]**n,
                 (self.sym_x[0], self.sym_nodes[0,0], self.sym_nodes[1,0])) \
             for j in range(self.n_dofs)] \
             for i in range(self.n_dofs)])
-        assert(self.sym_phi_dphi_dphi_phi_int.shape == (self.n_dofs, self.n_dofs))
+        assert (self.sym_phi_dphi_dphi_phi_int.shape == (self.n_dofs, self.n_dofs))
 
 
 class FiniteElement_Line_P0(FiniteElement_Line):
@@ -426,7 +425,9 @@ class FiniteElement_Line_H2k(FiniteElement_Line):
                                   + [0]*(self.n_dofs-4)
         self.sym_Lk = [numpy.prod([(self.sym_x[0]-self.sym_points[l_point,0])/(self.sym_points[k_point,0]-self.sym_points[l_point,0]) for l_point in range(self.n_points) if l_point != k_point]) for k_point in range(self.n_points)]
         self.sym_phi = sympy.Array(
-            [phik for k_point in range(self.n_points) for phik in [(1-2*(self.sym_x[0]-self.sym_points[k_point])*self.sym_Lk[k_point].diff(self.sym_x[0]).subs(self.sym_x[0],self.sym_points[k_point,0]))*self.sym_Lk[k_point]**2, (self.sym_x[0]-self.sym_points[k_point,0])*self.sym_Lk[k_point]**2]])
+            [phik for k_point in range(self.n_points) for phik in [\
+                (1-2*(self.sym_x[0]-self.sym_points[k_point,0]) * self.sym_Lk[k_point].diff(self.sym_x[0]).subs(self.sym_x[0],self.sym_points[k_point,0])) * self.sym_Lk[k_point]**2,
+                (self.sym_x[0]-self.sym_points[k_point,0])*self.sym_Lk[k_point]**2]])
 
 
 class FiniteElement_2D(FiniteElement):
