@@ -49,6 +49,7 @@ class DofManager():
         """
         Sets the dof connectivity.
         This function can only handle cases where there is exactly one (or dim) dof per node, and no edge/face/cell dofs.
+        For vector problems, it is assumed that the dof ordering is point-wise.
         """
         assert (self.finite_element.n_dofs == self.mesh.cell.n_nodes * dim),\
             "Number of dofs per element ("+str(self.finite_element.n_dofs)+") is different from number of nodes per cell ("+str(self.mesh.cell.n_nodes)+") times solution dimension ("+str(dim)+"). Aborting."
@@ -58,7 +59,9 @@ class DofManager():
         if   (dim == 1):
             self.local_to_global = self.mesh.cells_nodes
         elif (dim == 2):
-            self.local_to_global = numpy.hstack((self.mesh.cells_nodes*dim, (self.mesh.cells_nodes*dim)+1))
+            self.local_to_global = numpy.empty((self.mesh.n_cells, self.finite_element.n_dofs), dtype=numpy.uint)
+            for k_cell in range(self.mesh.n_cells):
+                self.local_to_global[k_cell] = []
 
     def set_connectivity_only_node_and_cell_dofs_only_one_dof_per_node(self):
         """

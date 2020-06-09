@@ -21,7 +21,6 @@ def assemble_vector(
         mesh,
         finite_element,
         get_loc_vec,
-        coeff,
         dof_manager,
         vec=None):
     """
@@ -32,7 +31,6 @@ def assemble_vector(
         mesh (LIB552.Mesh): The mesh.
         finite_element (LIB552.FiniteElement): The finite element.
         get_loc_vec (function): The function that computes the local vector.
-        coeff (float): A coeffcient to scale the vector.
         dof_manager (LIB552.DofManager): The dof manager.
         vec (numpy.array): The global vector (dof_manager.n_dofs) (if not provided, one will be created).
 
@@ -50,9 +48,53 @@ def assemble_vector(
         # print ("cell_idx = "+str(cell_idx))
         dofs_idx[:] = dof_manager.get_cell_dofs_idx(cell_idx)
         # print ("dofs_idx = "+str(dofs_idx))
-        get_loc_vec(mesh=mesh, k_cell=cell_idx, coeff=coeff, loc_vec=loc_vec)
+        get_loc_vec(mesh=mesh, k_cell=cell_idx, loc_vec=loc_vec)
         # print ("loc_vec = "+str(loc_vec))
         vec[numpy.ix_(dofs_idx)] += loc_vec
+    if (must_return):
+        return vec
+
+def assemble_vector_from_edge_integral(
+        mesh,
+        finite_element,
+        get_loc_vec,
+        dof_manager,
+        imposed_edges_idx,
+        vec=None):
+    """
+    Procedure to assemble a vector.
+    Either you provide the array, in which case it is filled; if you do not provide the array, it is created, filled, and returned.
+
+    Args:
+        mesh (LIB552.Mesh): The mesh.
+        finite_element (LIB552.FiniteElement): The finite element.
+        get_loc_vec (function): The function that computes the local vector.
+        dof_manager (LIB552.DofManager): The dof manager.
+        imposed_edges_idx (list of uints): List of edges on which to impose the force.
+        vec (numpy.array): The global vector (dof_manager.n_dofs) (if not provided, one will be created).
+
+    Returns:
+        vec (numpy.array): The global vector (dof_manager.n_dofs) (only returned if it was created within the function; if it was provided as input, it is filled in place and not returned.)
+    """
+
+    must_return = False
+    if (vec is None):
+        must_return = True
+        vec = numpy.zeros(dof_manager.n_dofs)
+    dofs_glo_idx = numpy.empty(finite_element.n_dofs, dtype=numpy.uint)
+    loc_vec = numpy.empty(finite_element.n_dofs)
+    for cell_glo_idx in range(mesh.n_cells):
+        # print ("cell_glo_idx = "+str(cell_glo_idx))
+        dofs_glo_idx[:] = dof_manager.local_to_global[cell_glo_idx]
+        # print ("dofs_glo_idx = "+str(dofs_glo_idx))
+        for edge_loc_idx in range(mesh.cell.n_edges):
+            edge_glo_idx = mesh.cells_edges[cell_glo_idx, edge_loc_idx]
+            if (edge_glo_idx in imposed_edges_idx):
+                # print ("cell_glo_idx = "+str(cell_glo_idx))
+                # print ("dofs_glo_idx = "+str(dofs_glo_idx))
+                get_loc_vec(mesh=mesh, k_cell=cell_glo_idx, k_cell_edge=edge_loc_idx, loc_vec=loc_vec)
+                # print ("loc_vec = "+str(loc_vec))
+                vec[numpy.ix_(dofs_glo_idx)] += loc_vec
     if (must_return):
         return vec
 
@@ -60,7 +102,6 @@ def assemble_matrix(
         mesh,
         finite_element,
         get_loc_mat,
-        coeff,
         dof_manager,
         mat=None):
     """
@@ -71,7 +112,6 @@ def assemble_matrix(
         mesh (LIB552.Mesh): The mesh.
         finite_element (LIB552.FiniteElement): The finite element.
         get_loc_mat (function): The function that computes the local matrix.
-        coeff (float): A coeffcient to scale the matrix.
         dof_manager (LIB552.DofManager): The dof manager.
         mat (numpy.array): The global matrix (dof_manager.n_dofs x dof_manager.n_dofs) (if not provided, one will be created).
 
@@ -89,7 +129,7 @@ def assemble_matrix(
         # print ("cell_idx = "+str(cell_idx))
         dofs_idx[:] = dof_manager.get_cell_dofs_idx(cell_idx)
         # print ("dofs_idx = "+str(dofs_idx))
-        get_loc_mat(mesh=mesh, k_cell=cell_idx, coeff=coeff, loc_mat=loc_mat)
+        get_loc_mat(mesh=mesh, k_cell=cell_idx, loc_mat=loc_mat)
         # print ("loc_mat = "+str(loc_mat))
         mat[numpy.ix_(dofs_idx,dofs_idx)] += loc_mat
     if (must_return):
@@ -100,8 +140,6 @@ def assemble_system_w_constraints(
         finite_element,
         get_loc_mat,
         get_loc_vec,
-        coeff_mat,
-        coeff_vec,
         dof_manager,
         prescribed_dofs_idx=[],
         prescribed_dofs_vals=[],
@@ -117,8 +155,6 @@ def assemble_system_w_constraints(
         finite_element (LIB552.FiniteElement): The finite element.
         get_loc_mat (function): The function that computes the local matrix.
         get_loc_vec (function): The function that computes the local vector.
-        coeff_mat (float): The coeffcient to scale the local matrix.
-        coeff_vec (float): The coeffcient to scale the local vector.
         dof_manager (LIB552.DofManager): The dof manager.
         prescribed_dofs_idx (list of uints): List of constrained dofs indexes.
         prescribed_dofs_vals (list of floats): List of constrained dofs values.
@@ -144,8 +180,8 @@ def assemble_system_w_constraints(
     for cell_idx in range(mesh.n_cells):
         # print ("cell_idx = "+str(cell_idx))
         dofs_idx[:] = dof_manager.get_cell_dofs_idx(cell_idx)
-        get_loc_mat(mesh=mesh, k_cell=cell_idx, coeff=coeff_mat, loc_mat=loc_mat)
-        get_loc_vec(mesh=mesh, k_cell=cell_idx, coeff=coeff_vec, loc_vec=loc_vec)
+        get_loc_mat(mesh=mesh, k_cell=cell_idx, loc_mat=loc_mat)
+        get_loc_vec(mesh=mesh, k_cell=cell_idx, loc_vec=loc_vec)
         # print ("loc_mat = "+str(loc_mat))
         # print ("loc_vec = "+str(loc_vec))
         prescribed_dofs_loc_idx = []

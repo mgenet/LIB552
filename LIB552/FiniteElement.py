@@ -114,7 +114,7 @@ class FiniteElement():
         """Computes the (symbolic) second derivatives of the shape functions, and store them as a (n_dofs x dim x dim) sympy Array."""
         assert (self.sym_dphi.shape == (self.n_dofs, self.dim))
         assert (self.sym_x.shape == (self.dim,))
-        self.sym_ddphi = sympy.permutedims(
+        self.sym_ddphi = sympy.permutedims( # Generalization of transpose for high dimension arrays
             sympy.derive_by_array(
                 self.sym_dphi,
                 self.sym_x),
@@ -123,38 +123,40 @@ class FiniteElement():
         assert (self.sym_ddphi.shape == (self.n_dofs, self.dim, self.dim))
 
     def _init_sym_phi_phi(self):
-        """Computes the (symbolic) product of shape functions, and store them as a (n_dofs x n_dofs) sympy Array."""
+        """Computes the (symbolic) products of shape functions, and store them as a (n_dofs x n_dofs) sympy Array."""
         assert (self.sym_phi.shape == (self.n_dofs,))
         self.sym_phi_phi = sympy.tensorproduct(
             self.sym_phi,
             self.sym_phi)
+        # self.sym_phi_phi = sympy.Array(self.sym_phi.tomatrix() * self.sym_phi.tomatrix().T)
         # self.sym_phi_phi = sympy.Array([[phik*phil for phil in self.sym_phi] for phik in self.sym_phi])
         assert (self.sym_phi_phi.shape == (self.n_dofs, self.n_dofs))
 
     def _init_sym_dphi_dphi(self):
-        """Computes the (symbolic) product of shape functions derivatives, and store them as a (n_dofs x n_dofs) sympy Array."""
+        """Computes the (symbolic) products of shape functions derivatives, and store them as a (n_dofs x n_dofs) sympy Array."""
         assert (self.sym_dphi.shape == (self.n_dofs, self.dim))
         self.sym_dphi_dphi = sympy.tensorcontraction(
             sympy.tensorproduct(
                 self.sym_dphi,
                 sympy.transpose(self.sym_dphi)),
             (1, 2))
+        # self.sym_dphi_dphi = sympy.Array(self.sym_dphi.tomatrix() * self.sym_dphi.tomatrix().T)
         assert (self.sym_dphi_dphi.shape == (self.n_dofs, self.n_dofs))
 
     def _init_sym_ddphi_ddphi(self):
-        """Computes the (symbolic) product of shape functions second derivatives, and store them as a (n_dofs x n_dofs) sympy Array."""
+        """Computes the (symbolic) products of shape functions second derivatives, and store them as a (n_dofs x n_dofs) sympy Array."""
         assert (self.sym_ddphi.shape == (self.n_dofs, self.dim, self.dim))
-        self.sym_ddphi_ddphi = sympy.tensorcontraction(
+        self.sym_ddphi_ddphi = sympy.tensorcontraction(sympy.tensorcontraction(
             sympy.tensorproduct(
                 self.sym_ddphi,
-                sympy.permutedims(
+                sympy.permutedims( # Generalization of transpose for high dimension arrays
                     self.sym_ddphi,
-                    (2, 1, 0))),
-            (1, 2, 3, 4))
+                    (1, 2, 0))),
+            (1, 3)), (1, 2))
         assert (self.sym_ddphi_ddphi.shape == (self.n_dofs, self.n_dofs))
 
     def _init_sym_phi_dphi_dphi_phi(self):
-        """Computes the (symbolic) product of shape functions and shape functions derivatives, and store them as a (n_dofs x n_dofs) sympy Array."""
+        """Computes the (symbolic) products of shape functions and shape functions derivatives, and store them as a (n_dofs x n_dofs) sympy Array."""
         assert (self.sym_phi.shape == (self.n_dofs,))
         assert (self.sym_dphi.shape == (self.n_dofs, self.dim))
         self.sym_phi_dphi_dphi_phi = (sympy.tensorcontraction(
@@ -164,82 +166,98 @@ class FiniteElement():
             (1,)) + sympy.tensorcontraction(
             sympy.tensorproduct(
                 self.sym_dphi,
-                self.sym_phi),
+                self.sym_phi), # MG20200609: No need to transpose sym_phi, which is a 1D array…
             (1,)))/2
+        # self.sym_phi_dphi_dphi_phi = sympy.Array(self.sym_phi.tomatrix() * self.sym_dphi.tomatrix().T + self.sym_dphi.tomatrix() * self.sym_phi.tomatrix().T )/2
         assert (self.sym_phi_dphi_dphi_phi.shape == (self.n_dofs, self.n_dofs))
 
-    def init_get_phi_int(self, n=0):
+    def _init_sym_phi_int(self, coeff=1, n=0):
+        """Computes the (symbolic) integrals over the element of the shape functions (force vector)."""
+        self.sym_phi_int = self.integrate_array(array=self.sym_phi, coeff=coeff, n=n)
+
+    def _init_sym_phi_phi_int(self, coeff=1, n=0):
+        """Computes the (symbolic) integrals over the element of the shape functions products (mass matrix)."""
+        self.sym_phi_phi_int = self.integrate_array(array=self.sym_phi_phi, coeff=coeff, n=n)
+
+    def _init_sym_dphi_dphi_int(self, coeff=1, n=0):
+        """Computes the (symbolic) integrals over the element of the shape functions derivatives products (stiffness matrix)."""
+        self.sym_dphi_dphi_int = self.integrate_array(array=self.sym_dphi_dphi, coeff=coeff, n=n)
+
+    def _init_sym_ddphi_ddphi_int(self, coeff=1, n=0):
+        """Computes the (symbolic) integrals over the element of the shape functions second derivatives products."""
+        self.sym_ddphi_ddphi_int = self.integrate_array(array=self.sym_ddphi_ddphi, coeff=coeff, n=n)
+
+    def _init_sym_phi_dphi_dphi_phi_int(self, coeff=1, n=0):
+        """Computes the (symbolic) integral over the element of the shape functions and shape functions derivatives symmetrized products."""
+        self.sym_phi_dphi_dphi_phi_int = self.integrate_array(array=self.sym_phi_dphi_dphi_phi, coeff=coeff, n=n)
+
+    def init_get_phi_int(self, coeff=1, n=0):
         """Initializes the (efficient) computation of the shape functions element integral."""
-        self._init_sym_phi_int(n=n)
+        self._init_sym_phi_int(coeff=coeff, n=n)
         self._get_phi_int = sympy.lambdify(
             args=self.sym_nodes.tolist(),
             expr=self.sym_phi_int,
             modules="numpy")
 
-    def get_phi_int(self, mesh, k_cell, coeff, loc_vec):
+    def get_phi_int(self, mesh, k_cell, loc_vec):
         """(Efficient) computation of shape functions element integral."""
         loc_vec[:] = self._get_phi_int(*mesh.get_cell_nodes_coords(k_cell))
-        loc_vec *= coeff
 
-    def init_get_phi_phi_int(self, n=0):
+    def init_get_phi_phi_int(self, coeff=1, n=0):
         """Initializes the (efficient) computation of the shape functions products element integral."""
         self._init_sym_phi_phi()
-        self._init_sym_phi_phi_int(n=n)
+        self._init_sym_phi_phi_int(coeff=coeff, n=n)
         self._get_phi_phi_int = sympy.lambdify(
             args=self.sym_nodes.tolist(),
             expr=self.sym_phi_phi_int,
             modules="numpy")
 
-    def get_phi_phi_int(self, mesh, k_cell, coeff, loc_mat):
+    def get_phi_phi_int(self, mesh, k_cell, loc_mat):
         """(Efficient) computation of shape functions products element integral."""
         loc_mat[:,:] = self._get_phi_phi_int(*mesh.get_cell_nodes_coords(k_cell))
-        loc_mat *= coeff
 
-    def init_get_dphi_dphi_int(self, n=0):
+    def init_get_dphi_dphi_int(self, coeff=1, n=0):
         """Initializes the (efficient) computation of the shape functions derivatives products element integral."""
         self._init_sym_dphi()
         self._init_sym_dphi_dphi()
-        self._init_sym_dphi_dphi_int(n=n)
+        self._init_sym_dphi_dphi_int(coeff=coeff, n=n)
         self._get_dphi_dphi_int = sympy.lambdify(
             args=self.sym_nodes.tolist(),
             expr=self.sym_dphi_dphi_int,
             modules="numpy")
 
-    def get_dphi_dphi_int(self, mesh, k_cell, coeff, loc_mat):
+    def get_dphi_dphi_int(self, mesh, k_cell, loc_mat):
         """(Efficient) computation of shape functions derivatives products element integral."""
         loc_mat[:,:] = self._get_dphi_dphi_int(*mesh.get_cell_nodes_coords(k_cell))
-        loc_mat *= coeff
 
-    def init_get_ddphi_ddphi_int(self, n=0):
+    def init_get_ddphi_ddphi_int(self, coeff=1, n=0):
         """Initializes the (efficient) computation of the shape functions second derivatives products element integral."""
         self._init_sym_dphi()
         self._init_sym_ddphi()
         self._init_sym_ddphi_ddphi()
-        self._init_sym_ddphi_ddphi_int(n=n)
+        self._init_sym_ddphi_ddphi_int(coeff=coeff, n=n)
         self._get_ddphi_ddphi_int = sympy.lambdify(
             args=self.sym_nodes.tolist(),
             expr=self.sym_ddphi_ddphi_int,
             modules="numpy")
 
-    def get_ddphi_ddphi_int(self, mesh, k_cell, coeff, loc_mat):
+    def get_ddphi_ddphi_int(self, mesh, k_cell, loc_mat):
         """(Efficient) computation of shape functions second derivatives products element integral."""
         loc_mat[:,:] = self._get_ddphi_ddphi_int(*mesh.get_cell_nodes_coords(k_cell))
-        loc_mat *= coeff
 
-    def init_get_phi_dphi_dphi_phi_int(self, n=0):
+    def init_get_phi_dphi_dphi_phi_int(self, coeff=1, n=0):
         """Initializes the (efficient) computation of the shape functions and shape function derivatives products element integral."""
         self._init_sym_dphi()
         self._init_sym_phi_dphi_dphi_phi()
-        self._init_sym_phi_dphi_dphi_phi_int(n=n)
+        self._init_sym_phi_dphi_dphi_phi_int(coeff=coeff, n=n)
         self._get_phi_dphi_dphi_phi_int = sympy.lambdify(
             args=self.sym_nodes.tolist(),
             expr=self.sym_phi_dphi_dphi_phi_int,
             modules="numpy")
 
-    def get_phi_dphi_dphi_phi_int(self, mesh, k_cell, coeff, loc_mat):
+    def get_phi_dphi_dphi_phi_int(self, mesh, k_cell, loc_mat):
         """(Efficient) computation of the shape functions and shape function derivatives products element integral."""
         loc_mat[:,:] = self._get_phi_dphi_dphi_phi_int(*mesh.get_cell_nodes_coords(k_cell))
-        loc_mat *= coeff
 
 
 class FiniteElement_1D(FiniteElement):
@@ -259,92 +277,35 @@ class FiniteElement_Line(FiniteElement_1D):
             (self.n_nodes, self.dim))
         self.n_edges = 0
 
-    def _init_sym_phi_int(self, n=0):
+    def integrate_array(self, array, coeff=1, n=0):
         """
-        Computes the (symbolic) integral of the shape functions over the element.
-        Stores them as (n_dofs) sympy Array.
-        The integrand can be multiplied by the spatial variable to a given power, which is useful for instance in case of cylindrical or spherical symmetry.
+        Computes the (symbolic) integral over the element of a (1D or 2D symmetric) sympy array, and stores it as a sympy Array.
+        The integrand can be multiplied by a (scalar) coefficent.
+        The integrand can be multiplied by the first spatial variable to a given power, which is useful for instance in case of cylindrical or spherical symmetry.
 
         Args:
+            coeff (float): The coefficient.
             n (uint): The power of the spatial variable.
         """
-        assert (self.sym_phi.shape == (self.n_dofs,))
-        self.sym_phi_int = sympy.Array([sympy.integrate(
-            self.sym_phi[i] * self.sym_x[0]**n,
-            (self.sym_x[0], self.sym_nodes[0,0], self.sym_nodes[1,0])) for i in range(self.n_dofs)])
-        assert (self.sym_phi_int.shape == (self.n_dofs,))
-
-    def _init_sym_phi_phi_int(self, n=0):
-        """
-        Computes the (symbolic) integral of the of shape functions product over the element.
-        Stores them as (n_dofs x n_dofs) sympy Array.
-        The integrand can be multiplied by the spatial variable to a given power, which is useful for instance in case of cylindrical or spherical symmetry.
-
-        Args:
-            n (uint): The power of the spatial variable.
-        """
-        assert (self.sym_phi_phi.shape == (self.n_dofs, self.n_dofs))
-        self.sym_phi_phi_int = sympy.Array(
-            [[sympy.integrate(
-                self.sym_phi_phi[i,j] * self.sym_x[0]**n,
-                (self.sym_x[0], self.sym_nodes[0,0], self.sym_nodes[1,0])) \
-            for j in range(self.n_dofs)] \
-            for i in range(self.n_dofs)])
-        assert (self.sym_phi_phi_int.shape == (self.n_dofs, self.n_dofs))
-
-    def _init_sym_dphi_dphi_int(self, n=0):
-        """
-        Computes the (symbolic) integral of the of shape functions derivatives product over the element.
-        Stores them as (n_dofs x n_dofs) sympy Array.
-        The integrand can be multiplied by the spatial variable to a given power, which is useful for instance in case of cylindrical or spherical symmetry.
-
-        Args:
-            n (uint): The power of the spatial variable.
-        """
-        assert (self.sym_dphi_dphi.shape == (self.n_dofs, self.n_dofs))
-        self.sym_dphi_dphi_int = sympy.Array(
-            [[sympy.integrate(
-                self.sym_dphi_dphi[i,j] * self.sym_x[0]**n,
-                (self.sym_x[0], self.sym_nodes[0,0], self.sym_nodes[1,0])) \
-            for j in range(self.n_dofs)] \
-            for i in range(self.n_dofs)])
-        assert (self.sym_dphi_dphi_int.shape == (self.n_dofs, self.n_dofs))
-
-    def _init_sym_ddphi_ddphi_int(self, n=0):
-        """
-        Computes the (symbolic) integral of the of shape functions second derivatives product over the element.
-        Stores them as (n_dofs x n_dofs) sympy Array.
-        The integrand can be multiplied by the spatial variable to a given power, which is useful for instance in case of cylindrical or spherical symmetry.
-
-        Args:
-            n (uint): The power of the spatial variable.
-        """
-        assert (self.sym_ddphi_ddphi.shape == (self.n_dofs, self.n_dofs))
-        self.sym_ddphi_ddphi_int = sympy.Array(
-            [[sympy.integrate(
-                self.sym_ddphi_ddphi[i,j] * self.sym_x[0]**n,
-                (self.sym_x[0], self.sym_nodes[0,0], self.sym_nodes[1,0])) \
-            for j in range(self.n_dofs)] \
-            for i in range(self.n_dofs)])
-        assert (self.sym_ddphi_ddphi_int.shape == (self.n_dofs, self.n_dofs))
-
-    def _init_sym_phi_dphi_dphi_phi_int(self, n=0):
-        """
-        Computes the (symbolic) integral of the of shape functions and shape functions derivatives product over the element.
-        Stores them as (n_dofs x n_dofs) sympy Array.
-        The integrand can be multiplied by the spatial variable to a given power, which is useful for instance in case of cylindrical or spherical symmetry.
-
-        Args:
-            n (uint): The power of the spatial variable.
-        """
-        assert (self.sym_phi_dphi_dphi_phi.shape == (self.n_dofs, self.n_dofs))
-        self.sym_phi_dphi_dphi_phi_int = sympy.Array(
-            [[sympy.integrate(
-                self.sym_phi_dphi_dphi_phi[i,j] * self.sym_x[0]**n,
-                (self.sym_x[0], self.sym_nodes[0,0], self.sym_nodes[1,0])) \
-            for j in range(self.n_dofs)] \
-            for i in range(self.n_dofs)])
-        assert (self.sym_phi_dphi_dphi_phi_int.shape == (self.n_dofs, self.n_dofs))
+        array_int = sympy.MutableDenseNDimArray(array)
+        if (array.rank() == 1):
+            for i in range(array.shape[0]):
+                array_int[i,] = sympy.integrate(
+                    coeff * array[i] * self.sym_x[0]**n,
+                    (self.sym_x[0], self.sym_nodes[0,0], self.sym_nodes[1,0]))
+        elif (array.rank() == 2):
+            assert (array.shape[1] == array.shape[0]), "Input array must be symmetric. Aborting."
+            for i in range(0,array.shape[0]):
+                for j in range(i,array.shape[0]):
+                    array_int[i,j] = sympy.integrate(
+                        coeff * array[i,j] * self.sym_x[0]**n,
+                        (self.sym_x[0], self.sym_nodes[0,0], self.sym_nodes[1,0]))
+            for i in range(0,array.shape[0]):
+                for j in range(0,i):
+                    array_int[i,j] = array_int[j,i]
+        else:
+            assert (0), "Input array must be 1D or 2D. Aborting."
+        return (array_int)
 
 
 class FiniteElement_Line_P0(FiniteElement_Line):
@@ -436,55 +397,76 @@ class FiniteElement_2D(FiniteElement):
         self.dim = 2
         self.sym_x = sympy.Array(sympy.symbols('x:{}'.format(self.dim)))
 
-    def _init_sym_phi_int(self, n=0):
+    def integrate_array(self, array, coeff=1, n=0):
         """
-        Computes the (symbolic) integral of the shape functions over the element (force vector).
-        Stores them as (n_dofs) sympy Array.
-        The integrand can be multiplied by the spatial variable to a given power, which is useful for instance in case of cylindrical or spherical symmetry. Not implemented!
+        Computes the (symbolic) integral over the element of a (1D or 2D symmetric) sympy array, and stores it as a sympy Array.
+        The integrand can be multiplied by a (scalar) coefficent.
+        The integrand can be multiplied by the first spatial variable to a given power, which is useful for instance in case of cylindrical or spherical symmetry.
 
         Args:
+            coeff (float): The coefficient.
             n (uint): The power of the spatial variable.
         """
-        self.sym_phi_int = sympy.Array(
-            [sum([coeff * polytope_integrate(
-                poly=self.sym_polygon,
-                expr=sympy.abc.x**pows[0] * sympy.abc.y**pows[1] * sympy.abc.x**n) \
-            for pows, coeff in self.sym_phi[i].as_poly(self.sym_x[0], self.sym_x[1]).as_dict().items()]) \
-            for i in range(self.n_dofs)])/sympy.sign(-self.sym_polygon.area) # MG20200501: Need to integrate monomes alone… Also, integral is positive for clockwise numbering, negative for counter-clockwise numbering… # MG20200511: polytope_integrate seems to require integration variable to be x, y, etc…
+        array_int = sympy.MutableDenseNDimArray(array)
+        if (array.rank() == 1):
+            for i in range(array.shape[0]):
+                array_int[i,] = 0.
+                for pows, c in array[i].as_poly(self.sym_x[0], self.sym_x[1]).as_dict().items(): # MG20200501: polytope_integrate seems to require to integrate monomes alone…
+                    array_int[i,] += coeff * c * polytope_integrate(
+                        poly=self.sym_polygon,
+                        expr=sympy.abc.x**(n+pows[0]) * sympy.abc.y**pows[1]) # MG20200511: polytope_integrate seems to require integration variable to be x, y, etc…
+        elif (array.rank() == 2):
+            assert (array.shape[1] == array.shape[0]), "Input array must be symmetric. Aborting."
+            for i in range(0,array.shape[0]):
+                for j in range(i,array.shape[0]):
+                    array_int[i,j] = 0.
+                    for pows, c in array[i,j].as_poly(self.sym_x[0], self.sym_x[1]).as_dict().items(): # MG20200501: polytope_integrate seems to require to integrate monomes alone…
+                        array_int[i,j] += coeff * c * polytope_integrate(
+                            poly=self.sym_polygon,
+                            expr=sympy.abc.x**(n+pows[0]) * sympy.abc.y**pows[1]) # MG20200511: polytope_integrate seems to require integration variable to be x, y, etc.
+            for i in range(0,array.shape[0]):
+                for j in range(0,i):
+                    array_int[i,j] = array_int[j,i]
+        else:
+            assert (0), "Input array must be 1D or 2D. Aborting."
+        array_int /= sympy.sign(-self.sym_polygon.area) # MG20200501: Integral is positive for clockwise numbering, negative for counter-clockwise numbering…
+        return (array_int)
 
-    def _init_sym_phi_phi_int(self, n=0):
+    def integrate_array_on_edges(self, array, coeff=1, n=0):
         """
-        Computes the (symbolic) integral of the shape functions product over the element (mass matrix).
-        Stores them as (n_dofs x n_dofs) sympy Array.
-        The integrand can be multiplied by the spatial variable to a given power, which is useful for instance in case of cylindrical or spherical symmetry. Not implemented!
+        Computes the (symbolic) integral over the element edges of a (1D) sympy array, and stores it as a (1D) sympy Array.
+        The integrand can be multiplied by a (scalar) coefficent.
+        The integrand can be multiplied by the first spatial variable to a given power, which is useful for instance in case of cylindrical or spherical symmetry.
 
         Args:
+            coeff (float): The coefficient.
             n (uint): The power of the spatial variable.
         """
-        self.sym_phi_phi_int = sympy.Array(
-            [[sum([coeff * polytope_integrate(
-                poly=self.sym_polygon,
-                expr=sympy.abc.x**pows[0] * sympy.abc.y**pows[1] * sympy.abc.x**n) \
-            for pows, coeff in self.sym_phi_phi[i,j].as_poly(self.sym_x[0], self.sym_x[1]).as_dict().items()]) \
-            for j in range(self.n_dofs)] \
-            for i in range(self.n_dofs)])/sympy.sign(-self.sym_polygon.area) # MG20200501: Need to integrate monomes alone… Also, integral is positive for clockwise numbering, negative for counter-clockwise numbering… # MG20200511: polytope_integrate seems to require integration variable to be x, y, etc.
+        array_int = [sympy.MutableDenseNDimArray(array) for k_edge in range(self.n_edges)]
+        if (array.rank() == 1):
+            for k_edge in range(self.n_edges):
+                for i in range(array.shape[0]):
+                    array_int[k_edge][i,] = coeff * sympy.line_integrate(array[i] * self.sym_x[0]**n, self.sym_edges[k_edge], [self.sym_x[0], self.sym_x[1]])
+        else:
+            assert (0), "Input array must be 1D. Aborting."
+        return (array_int)
 
-    def _init_sym_dphi_dphi_int(self, n=0):
-        """
-        Computes the (symbolic) integral of the shape functions derivatives product over the element (stiffness matrix).
-        Stores them as (n_dofs x n_dofs) sympy Array.
-        The integrand can be multiplied by the spatial variable to a given power, which is useful for instance in case of cylindrical or spherical symmetry. Not implemented!
+    def _init_sym_phi_edge_int(self, coeff=1, n=0):
+        """Computes the (symbolic) integrals over the element of the shape functions (force vector)."""
+        self.sym_phi_edge_int = self.integrate_array_on_edges(array=self.sym_phi, coeff=coeff, n=n)
 
-        Args:
-            n (uint): The power of the spatial variable.
-        """
-        self.sym_dphi_dphi_int = sympy.Array(
-            [[sum([coeff * polytope_integrate(
-                poly=self.sym_polygon,
-                expr=sympy.abc.x**pows[0] * sympy.abc.y**pows[1] * sympy.abc.x**n) \
-            for pows, coeff in self.sym_dphi_dphi[i,j].as_poly(self.sym_x[0], self.sym_x[1]).as_dict().items()]) \
-            for j in range(self.n_dofs)] \
-            for i in range(self.n_dofs)])/sympy.sign(-self.sym_polygon.area) # MG20200501: Need to integrate monomes alone… Also, integral is positive for clockwise numbering, negative for counter-clockwise numbering… # MG20200511: polytope_integrate seems to require integration variable to be x, y, etc.
+    def init_get_phi_edge_int(self, coeff=1, n=0):
+        """Initializes the (efficient) computation of the shape functions edges integrals."""
+        self._init_sym_phi_edge_int(coeff=coeff, n=n)
+        self._get_phi_edge_int = [sympy.lambdify(
+            args=self.sym_nodes.tolist(),
+            expr=self.sym_phi_edge_int[k_edge],
+            modules="numpy") \
+        for k_edge in range(self.n_edges)]
+
+    def get_phi_edge_int(self, mesh, k_cell, k_cell_edge, loc_vec):
+        """(Efficient) computation of shape functions element integral."""
+        loc_vec[:] = self._get_phi_edge_int[k_cell_edge](*mesh.get_cell_nodes_coords(k_cell))
 
 
 class FiniteElement_Triangle(FiniteElement_2D):
@@ -498,8 +480,9 @@ class FiniteElement_Triangle(FiniteElement_2D):
         self.sym_polygon = sympy.Polygon(
             sympy.Point(self.sym_nodes[0]),
             sympy.Point(self.sym_nodes[1]),
-            sympy.Point(self.sym_nodes[2]))
+            sympy.Point(self.sym_nodes[2])) # This is used for element integral
         self.n_edges = 3
+        self.sym_edges = [sympy.Curve((1-sympy.abc.t) * self.sym_nodes[k_edge] + sympy.abc.t * self.sym_nodes[(k_edge+1)%self.n_edges], (sympy.abc.t, 0, 1)) for k_edge in range(self.n_edges)] # This is used for edges integral
 
 
 class FiniteElement_Triangle_P0(FiniteElement_Triangle):
@@ -564,23 +547,6 @@ class FiniteElement_Triangle_P1(FiniteElement_Triangle):
         self.dofs_attachement_idx = [0, 1, 2]
         self.sym_phi = sympy.Array(
             compute_Lagrange_shape_functions_through_linear_system(self.sym_x, self.sym_points))
-        # for k_dof in range(self.n_dofs):
-        #     # print (k_dof)
-        #     ak = sympy.symbols('a:{}'.format(self.n_dofs))
-        #     # print (ak)
-        #     sym_phi = ak[0]                 \
-        #             + ak[1] * self.sym_x[0] \
-        #             + ak[2] * self.sym_x[1]
-        #     # print (sym_phi)
-        #     ak_sol = sympy.solve(
-        #         [sym_phi.subs({self.sym_x[0]:self.sym_points[l_dof,0], self.sym_x[1]:self.sym_points[l_dof,1]}) - float(l_dof == k_dof) for l_dof in range(self.n_dofs)],
-        #         ak)
-        #     # print (ak_sol)
-        #     sym_phi = sym_phi.subs(ak_sol)
-        #     # print (sym_phi)
-        #     self.sym_phi.append(sym_phi)
-        # print (self.sym_phi)
-        # self.sym_phi = sympy.Array(self.sym_phi)
 
 
 class FiniteElement_Triangle_P2(FiniteElement_Triangle):
@@ -601,27 +567,6 @@ class FiniteElement_Triangle_P2(FiniteElement_Triangle):
         self.dofs_attachement_idx = [0, 1, 2, 0, 1, 2]
         self.sym_phi = sympy.Array(
             compute_Lagrange_shape_functions_through_linear_system(self.sym_x, self.sym_points))
-        # self.sym_phi = []
-        # for k_dof in range(self.n_dofs):
-        #     # print (k_dof)
-        #     ak = sympy.symbols('a:{}'.format(self.n_dofs))
-        #     # print (ak)
-        #     sym_phi = ak[0]                                       \
-        #             + ak[1] * self.sym_x[0]                       \
-        #             + ak[2]                    * self.sym_x[1]    \
-        #             + ak[3] * self.sym_x[0]    * self.sym_x[1]    \
-        #             + ak[4] * self.sym_x[0]**2                    \
-        #             + ak[5]                    * self.sym_x[1]**2
-        #     # print (sym_phi)
-        #     ak_sol = sympy.solve(
-        #         [sym_phi.subs({self.sym_x[0]:self.sym_points[l_dof,0], self.sym_x[1]:self.sym_points[l_dof,1]}) - float(l_dof == k_dof) for l_dof in range(self.n_dofs)],
-        #         ak)
-        #     # print (ak_sol)
-        #     sym_phi = sym_phi.subs(ak_sol)
-        #     # print (sym_phi)
-        #     self.sym_phi.append(sym_phi)
-        # # print (self.sym_phi)
-        # self.sym_phi = sympy.Array(self.sym_phi)
 
 
 class FiniteElement_Triangle_Pk(FiniteElement_Triangle):
@@ -640,8 +585,9 @@ class FiniteElement_Quadrangle(FiniteElement_2D):
             sympy.Point(self.sym_nodes[0]),
             sympy.Point(self.sym_nodes[1]),
             sympy.Point(self.sym_nodes[3]),
-            sympy.Point(self.sym_nodes[2]))
+            sympy.Point(self.sym_nodes[2])) # This is used for element integral
         self.n_edges = 4
+        self.sym_edges = [sympy.Curve((1-sympy.abc.t) * self.sym_nodes[k_edge] + sympy.abc.t * self.sym_nodes[(k_edge+1)%self.n_edges], (sympy.abc.t, 0, 1)) for k_edge in range(self.n_edges)] # This is used for edges integral
 
 
 class FiniteElement_Quadrangle_Q0(FiniteElement_Quadrangle):
@@ -684,11 +630,11 @@ class FiniteElement_Quadrangle_Q1(FiniteElement_Quadrangle):
         #     *(self.sym_x[1]       -self.sym_points[1,1])/(self.sym_points[3,1]-self.sym_points[1,1])])
 
 
-class FiniteElement_Quadrangle_P2(FiniteElement_Quadrangle):
+class FiniteElement_Quadrangle_Q2(FiniteElement_Quadrangle):
     pass
 
 
-class FiniteElement_Quadrangle_Pk(FiniteElement_Quadrangle):
+class FiniteElement_Quadrangle_Qk(FiniteElement_Quadrangle):
     pass
 
 

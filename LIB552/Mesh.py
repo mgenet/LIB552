@@ -289,6 +289,7 @@ def create_unit_square_triangular_mesh(
         for k_x in range(n_nodes_x):
             x = k_x/n_cells_x
             nodes[k_y*n_nodes_x+k_x] = [x, y]
+    # print ("nodes = "+str(nodes))
     cell = lib.Cell_Triangle()
     n_cells = 2 * n_cells_x * n_cells_y
     cells_nodes = numpy.empty(
@@ -300,10 +301,11 @@ def create_unit_square_triangular_mesh(
             n2 = n1 + 1
             n3 = n1 + n_nodes_x
             n4 = n3 + 1
-            k_cell = 2 * n1
+            k_cell = 2 * (k_y * n_cells_x + k_x)
             # print("k_cell = "+str(k_cell))
             cells_nodes[k_cell  , :] = [n1, n2, n4]
             cells_nodes[k_cell+1, :] = [n1, n4, n3]
+    # print ("cells_nodes = "+str(cells_nodes))
     return lib.Mesh(
         dim=dim,
         nodes=nodes,
@@ -347,7 +349,7 @@ def create_unit_square_quadrangular_mesh(
             n2 = n1 + 1
             n3 = n1 + n_nodes_x
             n4 = n3 + 1
-            k_cell = n1
+            k_cell = k_y * n_cells_x + k_x
             # print("k_cell = "+str(k_cell))
             cells_nodes[k_cell, :] = [n1, n2, n3, n4]
     return lib.Mesh(
