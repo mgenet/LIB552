@@ -173,23 +173,23 @@ class FiniteElement():
 
     def _init_sym_phi_int(self, coeff=1, n=0):
         """Computes the (symbolic) integrals over the element of the shape functions (force vector)."""
-        self.sym_phi_int = self.integrate_array(array=self.sym_phi, coeff=coeff, n=n)
+        self.sym_phi_int = self._integrate_array(array=self.sym_phi, coeff=coeff, n=n)
 
     def _init_sym_phi_phi_int(self, coeff=1, n=0):
         """Computes the (symbolic) integrals over the element of the shape functions products (mass matrix)."""
-        self.sym_phi_phi_int = self.integrate_array(array=self.sym_phi_phi, coeff=coeff, n=n)
+        self.sym_phi_phi_int = self._integrate_array(array=self.sym_phi_phi, coeff=coeff, n=n)
 
     def _init_sym_dphi_dphi_int(self, coeff=1, n=0):
         """Computes the (symbolic) integrals over the element of the shape functions derivatives products (stiffness matrix)."""
-        self.sym_dphi_dphi_int = self.integrate_array(array=self.sym_dphi_dphi, coeff=coeff, n=n)
+        self.sym_dphi_dphi_int = self._integrate_array(array=self.sym_dphi_dphi, coeff=coeff, n=n)
 
     def _init_sym_ddphi_ddphi_int(self, coeff=1, n=0):
         """Computes the (symbolic) integrals over the element of the shape functions second derivatives products."""
-        self.sym_ddphi_ddphi_int = self.integrate_array(array=self.sym_ddphi_ddphi, coeff=coeff, n=n)
+        self.sym_ddphi_ddphi_int = self._integrate_array(array=self.sym_ddphi_ddphi, coeff=coeff, n=n)
 
     def _init_sym_phi_dphi_dphi_phi_int(self, coeff=1, n=0):
         """Computes the (symbolic) integral over the element of the shape functions and shape functions derivatives symmetrized products."""
-        self.sym_phi_dphi_dphi_phi_int = self.integrate_array(array=self.sym_phi_dphi_dphi_phi, coeff=coeff, n=n)
+        self.sym_phi_dphi_dphi_phi_int = self._integrate_array(array=self.sym_phi_dphi_dphi_phi, coeff=coeff, n=n)
 
     def init_get_phi_int(self, coeff=1, n=0):
         """Initializes the (efficient) computation of the shape functions element integral."""
@@ -277,7 +277,7 @@ class FiniteElement_Line(FiniteElement_1D):
             (self.n_nodes, self.dim))
         self.n_edges = 0
 
-    def integrate_array(self, array, coeff=1, n=0):
+    def _integrate_array(self, array, coeff=1, n=0):
         """
         Computes the (symbolic) integral over the element of a (1D or 2D symmetric) sympy array, and stores it as a sympy Array.
         The integrand can be multiplied by a (scalar) coefficent.
@@ -397,7 +397,7 @@ class FiniteElement_2D(FiniteElement):
         self.dim = 2
         self.sym_x = sympy.Array(sympy.symbols('x:{}'.format(self.dim)))
 
-    def integrate_array(self, array, coeff=1, n=0):
+    def _integrate_array(self, array, coeff=1, n=0):
         """
         Computes the (symbolic) integral over the element of a (1D or 2D symmetric) sympy array, and stores it as a sympy Array.
         The integrand can be multiplied by a (scalar) coefficent.
@@ -432,7 +432,7 @@ class FiniteElement_2D(FiniteElement):
         array_int /= sympy.sign(-self.sym_polygon.area) # MG20200501: Integral is positive for clockwise numbering, negative for counter-clockwise numbering…
         return (array_int)
 
-    def integrate_array_on_edges(self, array, coeff=1, n=0):
+    def _integrate_array_on_edges(self, array, coeff=1, n=0):
         """
         Computes the (symbolic) integral over the element edges of a (1D) sympy array, and stores it as a (1D) sympy Array.
         The integrand can be multiplied by a (scalar) coefficent.
@@ -453,7 +453,7 @@ class FiniteElement_2D(FiniteElement):
 
     def _init_sym_phi_edge_int(self, coeff=1, n=0):
         """Computes the (symbolic) integrals over the element of the shape functions (force vector)."""
-        self.sym_phi_edge_int = self.integrate_array_on_edges(array=self.sym_phi, coeff=coeff, n=n)
+        self.sym_phi_edge_int = self._integrate_array_on_edges(array=self.sym_phi, coeff=coeff, n=n)
 
     def init_get_phi_edge_int(self, coeff=1, n=0):
         """Initializes the (efficient) computation of the shape functions edges integrals."""
@@ -509,17 +509,17 @@ def compute_Lagrange_shape_functions_through_linear_system(sym_x, sym_points):
                     + ak[1] * sym_x[0] \
                     + ak[2] * sym_x[1]
         elif (n_dofs == 4):
-            sym_phi = ak[0]                                       \
-                    + ak[1] * sym_x[0]                       \
-                    + ak[2]                    * sym_x[1]    \
-                    + ak[3] * sym_x[0]    * sym_x[1]
+            sym_phi = ak[0]                       \
+                    + ak[1] * sym_x[0]            \
+                    + ak[2]            * sym_x[1] \
+                    + ak[3] * sym_x[0] * sym_x[1]
         elif (n_dofs == 6):
-            sym_phi = ak[0]                                       \
-                    + ak[1] * sym_x[0]                       \
-                    + ak[2]                    * sym_x[1]    \
+            sym_phi = ak[0]                             \
+                    + ak[1] * sym_x[0]                  \
+                    + ak[2]               * sym_x[1]    \
                     + ak[3] * sym_x[0]    * sym_x[1]    \
-                    + ak[4] * sym_x[0]**2                    \
-                    + ak[5]                    * sym_x[1]**2
+                    + ak[4] * sym_x[0]**2               \
+                    + ak[5]               * sym_x[1]**2
         else:
             assert (0), "Not implemented. Aborting."
         # print (sym_phi)
@@ -615,8 +615,8 @@ class FiniteElement_Quadrangle_Q1(FiniteElement_Quadrangle):
         self.n_dofs = 4
         self.dofs_attachement = ["node"]*4
         self.dofs_attachement_idx = [0, 1, 2, 3]
-        self.sym_phi = sympy.Array(
-            [numpy.prod([(self.sym_x[0]-self.sym_points[l_dof,0])/(self.sym_points[k_dof,0]-self.sym_points[l_dof,0]) for l_dof in range(self.n_dofs) if l_dof != k_dof]) for k_dof in range(self.n_dofs)])
+#         self.sym_phi = sympy.Array(
+#             [numpy.prod([(self.sym_x[0]-self.sym_points[l_dof,0])/(self.sym_points[k_dof,0]-self.sym_points[l_dof,0]) for l_dof in range(self.n_dofs) if l_dof != k_dof]) for k_dof in range(self.n_dofs)])
         self.sym_phi = sympy.Array(
             compute_Lagrange_shape_functions_through_linear_system(self.sym_x, self.sym_points))
         # self.sym_phi = sympy.Array(
