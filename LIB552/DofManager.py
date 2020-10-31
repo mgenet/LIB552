@@ -39,10 +39,11 @@ class DofManager():
         self.finite_element = finite_element
         self.n_dofs = None
         self.local_to_global = None
+        self.global_to_local = None
 
     def __repr__(self):
         return "DofManager ("\
-              +"n_dofs="      +str(self.n_dofs      )+", "\
+              +"n_dofs="         +str(self.n_dofs         )+", "\
               +"local_to_global="+str(self.local_to_global)+")"
 
     def set_connectivity_from_mesh(self, dim=1):
@@ -60,6 +61,8 @@ class DofManager():
             self.local_to_global = self.mesh.cells_nodes
         elif (dim == 2):
             self.local_to_global = numpy.empty((self.mesh.n_cells, self.finite_element.n_dofs), dtype=numpy.uint)
+            assert (0),\
+                "ToDo."
             for k_cell in range(self.mesh.n_cells):
                 self.local_to_global[k_cell] = []
 
@@ -191,6 +194,7 @@ class DofManager():
 
     def set_dofs_coords(self):
         """Sets the dofs coordinates."""
+        if (self.global_to_local is None): self.set_inverse_connectivity()
         self.dofs_coords = numpy.empty((self.n_dofs, self.mesh.dim), dtype=numpy.float)
         self.finite_element.init_get_dofs_coords()
         for k_dof in range(self.n_dofs):

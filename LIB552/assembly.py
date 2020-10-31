@@ -162,8 +162,8 @@ def assemble_system_w_constraints(
         vec (numpy.array): The global vector (dof_manager.n_dofs) (if not provided, one will be created).
 
     Returns:
-        mat (numpy.array): The global matrix (dof_manager.n_dofs x dof_manager.n_dofs) (only returned if it was created within the function; if it was provided as input, it is filled in place and not returned.)
-        vec (numpy.array): The global vector (dof_manager.n_dofs) (only returned if it was created within the function; if it was provided as input, it is filled in place and not returned.)
+        mat (numpy.array): The global matrix (dof_manager.n_dofs x dof_manager.n_dofs) (only returned if it was created within the function; if it was provided as input, it is filled in place and not returned).
+        vec (numpy.array): The global vector (dof_manager.n_dofs) (only returned if it was created within the function; if it was provided as input, it is filled in place and not returned).
     """
 
     must_return = False
@@ -174,7 +174,7 @@ def assemble_system_w_constraints(
         must_return = True
         vec = numpy.zeros(dof_manager.n_dofs)
     dofs_idx = numpy.empty(finite_element.n_dofs, dtype=numpy.uint)
-    cell_prescribed_dofs_idx = numpy.empty(finite_element.n_dofs, dtype=numpy.int)
+    cell_prescribed_dofs_idx = numpy.empty(finite_element.n_dofs, dtype=numpy.int) # MG 20201031: Useless, right?
     loc_mat = numpy.empty((finite_element.n_dofs, finite_element.n_dofs))
     loc_vec = numpy.empty((finite_element.n_dofs))
     for cell_idx in range(mesh.n_cells):
