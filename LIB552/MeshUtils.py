@@ -43,15 +43,15 @@ def mesh_to_ugrid(mesh):
     if   (mesh.cell.cell_type == "Triangle"):
         cell_vtk_type = vtk.VTK_TRIANGLE
         connectivity = numpy.hstack((
-            numpy.full((mesh.n_cells, 1), mesh.cell.n_nodes, dtype=numpy.int),
-            mesh.cells_nodes.astype(numpy.int))).flatten()
+            numpy.full((mesh.n_cells, 1), mesh.cell.n_nodes, dtype=numpy.int64), # MG20201106: on Windows numpy.int returns int32, which numpy_to_vtkIdTypeArray does not like
+            mesh.cells_nodes.astype(numpy.int64))).flatten() # MG20201106: on Windows numpy.int returns int32, which numpy_to_vtkIdTypeArray does not like
     elif (mesh.cell.cell_type == "Quadrangle"):
         cell_vtk_type = vtk.VTK_QUAD
-        mesh.cells_nodes[:,[3,2]] = mesh.cells_nodes[:,[2,3]] # MG 20200517: VTK does not use lexicographic ordering for quadrangles
+        mesh.cells_nodes[:,[3,2]] = mesh.cells_nodes[:,[2,3]] # MG20200517: VTK does not use lexicographic ordering for quadrangles
         connectivity = numpy.hstack((
-            numpy.full((mesh.n_cells, 1), mesh.cell.n_nodes, dtype=numpy.int),
-            mesh.cells_nodes.astype(numpy.int))).flatten()
-        mesh.cells_nodes[:,[3,2]] = mesh.cells_nodes[:,[2,3]] # MG 20200517: VTK does not use lexicographic ordering for quadrangles
+            numpy.full((mesh.n_cells, 1), mesh.cell.n_nodes, dtype=numpy.int64), # MG20201106: on Windows numpy.int returns int32, which numpy_to_vtkIdTypeArray does not like
+            mesh.cells_nodes.astype(numpy.int64))).flatten() # MG20201106: on Windows numpy.int returns int32, which numpy_to_vtkIdTypeArray does not like
+        mesh.cells_nodes[:,[3,2]] = mesh.cells_nodes[:,[2,3]] # MG20200517: VTK does not use lexicographic ordering for quadrangles
     else:
         assert (0), "Not implemented. Aborting."
     cell_array = vtk.vtkCellArray()
