@@ -92,12 +92,16 @@ class VectorElement(lib.FiniteElement):
         """(Efficient) computation of shape functions element integral."""
         assert (self.dim == 2),\
             "Only implemented for 2D vector elements. Aborting."
-        assert (self.ordering == "component-wise"),\
-            "Only implemented for component-wise ordering of vector elements. Aborting."
-        loc_vec[:self.finite_element.n_dofs] = self.finite_element._get_phi_int(*mesh.get_cell_nodes_coords(k_cell))
-        loc_vec[self.finite_element.n_dofs:] = loc_vec[:self.finite_element.n_dofs]
-        loc_vec[:self.finite_element.n_dofs] *= self.phi_int_coeff[0]
-        loc_vec[self.finite_element.n_dofs:] *= self.phi_int_coeff[1]
+        if   (self.ordering == "component-wise"):
+            loc_vec[:self.finite_element.n_dofs] = self.finite_element._get_phi_int(*mesh.get_cell_nodes_coords(k_cell))
+            loc_vec[self.finite_element.n_dofs:] = loc_vec[:self.finite_element.n_dofs]
+            loc_vec[:self.finite_element.n_dofs] *= self.phi_int_coeff[0]
+            loc_vec[self.finite_element.n_dofs:] *= self.phi_int_coeff[1]
+        elif (self.ordering == "point-wise"):
+            loc_vec[0::2] = self.finite_element._get_phi_int(*mesh.get_cell_nodes_coords(k_cell))
+            loc_vec[1::2] = loc_vec[0::2]
+            loc_vec[0::2] *= self.phi_int_coeff[0]
+            loc_vec[1::2] *= self.phi_int_coeff[1]
 
     def init_get_phi_edge_int(self, coeff, n=0):
         """
@@ -112,12 +116,17 @@ class VectorElement(lib.FiniteElement):
         """(Efficient) computation of shape functions element integral."""
         assert (self.dim == 2),\
             "Only implemented for 2D vector elements. Aborting."
-        assert (self.ordering == "component-wise"),\
-            "Only implemented for component-wise ordering of vector elements. Aborting."
-        loc_vec[:self.finite_element.n_dofs] = self.finite_element._get_phi_edge_int[k_cell_edge](*mesh.get_cell_nodes_coords(k_cell))
-        loc_vec[self.finite_element.n_dofs:] = loc_vec[:self.finite_element.n_dofs]
-        loc_vec[:self.finite_element.n_dofs] *= self.phi_edge_int_coeff[0]
-        loc_vec[self.finite_element.n_dofs:] *= self.phi_edge_int_coeff[1]
+        loc_vec.fill(0.)
+        if   (self.ordering == "component-wise"):
+            loc_vec[:self.finite_element.n_dofs] = self.finite_element._get_phi_edge_int[k_cell_edge](*mesh.get_cell_nodes_coords(k_cell))
+            loc_vec[self.finite_element.n_dofs:] = loc_vec[:self.finite_element.n_dofs]
+            loc_vec[:self.finite_element.n_dofs] *= self.phi_edge_int_coeff[0]
+            loc_vec[self.finite_element.n_dofs:] *= self.phi_edge_int_coeff[1]
+        elif (self.ordering == "point-wise"):
+            loc_vec[0::2] = self.finite_element._get_phi_edge_int[k_cell_edge](*mesh.get_cell_nodes_coords(k_cell))
+            loc_vec[1::2] = loc_vec[0::2]
+            loc_vec[0::2] *= self.phi_edge_int_coeff[0]
+            loc_vec[1::2] *= self.phi_edge_int_coeff[1]
 
     def init_get_phi_phi_int(self, coeff=1, n=0):
         """
@@ -130,26 +139,42 @@ class VectorElement(lib.FiniteElement):
         """(Efficient) computation of shape functions products element integral."""
         assert (self.dim == 2),\
             "Only implemented for 2D vector elements. Aborting."
-        assert (self.ordering == "component-wise"),\
-            "Only implemented for component-wise ordering of vector elements. Aborting."
         loc_mat.fill(0.)
-        loc_mat[:self.finite_element.n_dofs, :self.finite_element.n_dofs] = self.finite_element._get_phi_phi_int(*mesh.get_cell_nodes_coords(k_cell))
-        loc_mat[self.finite_element.n_dofs:, self.finite_element.n_dofs:] = loc_mat[:self.finite_element.n_dofs, :self.finite_element.n_dofs]
+        if   (self.ordering == "component-wise"):
+            loc_mat[:self.finite_element.n_dofs, :self.finite_element.n_dofs] = self.finite_element._get_phi_phi_int(*mesh.get_cell_nodes_coords(k_cell))
+            loc_mat[self.finite_element.n_dofs:, self.finite_element.n_dofs:] = loc_mat[:self.finite_element.n_dofs, :self.finite_element.n_dofs]
+        elif (self.ordering == "point-wise"):
+            loc_mat[0::2,0::2] = self.finite_element._get_phi_phi_int(*mesh.get_cell_nodes_coords(k_cell))
+            loc_mat[1::2,1::2] = loc_mat[0::2,0::2]
 
     def _init_sym_B(self):
         """Computes the (symbolic) symmetric gradient of the shape functions, and stores them as a (n_dofs x dim x dim) sympy Array."""
         assert (self.dim == 2),\
             "Only implemented for 2D vector elements. Aborting."
-        assert (self.ordering == "component-wise"),\
-            "Only implemented for component-wise ordering of vector elements. Aborting."
         self.finite_element._init_sym_dphi()
         self.sym_B = sympy.MutableDenseNDimArray.zeros(self.n_dofs, self.dim, self.dim)
-        self.sym_B[:self.finite_element.n_dofs,0,0] = self.finite_element.sym_dphi[:,0]
-        self.sym_B[self.finite_element.n_dofs:,1,1] = self.finite_element.sym_dphi[:,1]
-        self.sym_B[:self.finite_element.n_dofs,0,1] = self.finite_element.sym_dphi[:,1]/2
-        self.sym_B[self.finite_element.n_dofs:,0,1] = self.finite_element.sym_dphi[:,0]/2
-        self.sym_B[:self.finite_element.n_dofs,1,0] = self.finite_element.sym_dphi[:,1]/2
-        self.sym_B[self.finite_element.n_dofs:,1,0] = self.finite_element.sym_dphi[:,0]/2
+        if   (self.ordering == "component-wise"):
+            self.sym_B[:self.finite_element.n_dofs,0,0] = self.finite_element.sym_dphi[:,0]
+            self.sym_B[self.finite_element.n_dofs:,1,1] = self.finite_element.sym_dphi[:,1]
+            self.sym_B[:self.finite_element.n_dofs,0,1] = self.finite_element.sym_dphi[:,1]/2
+            self.sym_B[self.finite_element.n_dofs:,0,1] = self.finite_element.sym_dphi[:,0]/2
+            self.sym_B[:self.finite_element.n_dofs,1,0] = self.finite_element.sym_dphi[:,1]/2
+            self.sym_B[self.finite_element.n_dofs:,1,0] = self.finite_element.sym_dphi[:,0]/2
+        elif (self.ordering == "point-wise"):
+            # MG20201111: This should work, right? Cf. https://github.com/sympy/sympy/issues/20410
+            # self.sym_B[0::2,0,0] = self.finite_element.sym_dphi[:,0]
+            # self.sym_B[1::2,1,1] = self.finite_element.sym_dphi[:,1]
+            # self.sym_B[0::2,0,1] = self.finite_element.sym_dphi[:,1]/2
+            # self.sym_B[1::2,0,1] = self.finite_element.sym_dphi[:,0]/2
+            # self.sym_B[0::2,1,0] = self.finite_element.sym_dphi[:,1]/2
+            # self.sym_B[1::2,1,0] = self.finite_element.sym_dphi[:,0]/2
+            for k_dof in range(self.finite_element.n_dofs):
+                self.sym_B[2*k_dof  ,0,0] = self.finite_element.sym_dphi[k_dof,0]
+                self.sym_B[2*k_dof+1,1,1] = self.finite_element.sym_dphi[k_dof,1]
+                self.sym_B[2*k_dof  ,0,1] = self.finite_element.sym_dphi[k_dof,1]/2
+                self.sym_B[2*k_dof+1,0,1] = self.finite_element.sym_dphi[k_dof,0]/2
+                self.sym_B[2*k_dof  ,1,0] = self.finite_element.sym_dphi[k_dof,1]/2
+                self.sym_B[2*k_dof+1,1,0] = self.finite_element.sym_dphi[k_dof,0]/2
 
     def _init_sym_B_B(self, coeff):
         """Computes the (symbolic) products of shape functions symmetric gradients, and stores them as a (n_dofs x n_dofs) sympy Array."""
@@ -170,7 +195,7 @@ class VectorElement(lib.FiniteElement):
 
     def _init_sym_B_B_int(self, n=0):
         """Computes the (symbolic) integrals over the element of the of shape functions symmetric gradients products (stiffness matrix)."""
-        self.sym_B_B_int = self.finite_element.integrate_array(array=self.sym_B_B, coeff=1, n=n)
+        self.sym_B_B_int = self.finite_element._integrate_array(array=self.sym_B_B, coeff=1, n=n)
 
     def init_get_B_B_int(self, coeff, n=0):
         """Initializes the (efficient) computation of the shape functions symmetric gradients products element integral."""
