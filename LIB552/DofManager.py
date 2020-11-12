@@ -61,10 +61,10 @@ class DofManager():
             self.local_to_global = self.mesh.cells_nodes
         elif (dim == 2):
             self.local_to_global = numpy.empty((self.mesh.n_cells, self.finite_element.n_dofs), dtype=numpy.uint)
-            assert (0),\
-                "ToDo."
             for k_cell in range(self.mesh.n_cells):
-                self.local_to_global[k_cell] = []
+                cell_nodes = self.mesh.cells_nodes[k_cell]
+                self.local_to_global[k_cell,::2] = 2*cell_nodes
+                self.local_to_global[k_cell,1::2] = 2*cell_nodes+1
 
     def set_connectivity_only_node_and_cell_dofs_only_one_dof_per_node(self):
         """
