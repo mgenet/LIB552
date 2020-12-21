@@ -123,7 +123,7 @@ class Mesh:
             self.edges_nodes = []
             self.cells_edges = []
         elif (self.dim == 2):
-            self.n_edges = self.n_nodes + (self.n_cells+1) - 2 # Euler's formula
+            self.n_edges = self.n_nodes + (self.n_cells+1) - 2 # Euler's formula (only works if mesh has no hole, see later)
             # print ("n_edges = "+str(self.n_edges))
             self.edges_nodes = numpy.empty((self.n_edges,                 2), dtype=numpy.uint)
             self.cells_edges = numpy.empty((self.n_cells, self.cell.n_edges), dtype=numpy.uint)
@@ -143,6 +143,9 @@ class Mesh:
                     if   (len(intersection) == 1):
                         self.cells_edges[k_cell, k_cell_edge] = intersection.pop()
                     elif (len(intersection) == 0):
+                        if (k_edge >= len(self.edges_nodes)): # If mesh has holes, there are actually more edges than predicted by Euler's formula
+                            self.n_edges += 1
+                            self.edges_nodes = numpy.concatenate((self.edges_nodes, numpy.empty((1,2), dtype=numpy.uint)))
                         self.cells_edges[k_cell, k_cell_edge] = k_edge
                         self.edges_nodes[k_edge] = numpy.sort(edge_nodes)
                         nodes_edges[edge_nodes[0]].add(k_edge)
