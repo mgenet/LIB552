@@ -165,24 +165,24 @@ class Mesh:
               +"cells_nodes="+str(self.cells_nodes)+", "\
              +("cells_edges="+str(self.cells_edges)     )*(self.dim==2)+")"
 
-    def get_cell_nodes_idx(self, k_cell):
-        """Returns the global idx of the nodes of a given cell."""
+    def get_cell_nodes_index(self, k_cell):
+        """Returns the global index of the nodes of a given cell."""
         return self.cells_nodes[k_cell]
 
     def get_cell_node_index(self, k_cell, k_cell_node):
         """Returns the global index of a given node of a given cell."""
         return self.cells_nodes[k_cell, k_cell_node]
 
-    def get_cell_edges_idx(self, k_cell):
-        """Returns the global idx of the edges of a given cell."""
+    def get_cell_edges_index(self, k_cell):
+        """Returns the global index of the edges of a given cell."""
         return self.cells_edges[k_cell]
 
     def get_cell_edge_index(self, k_cell, k_cell_edge):
         """Returns the global index of a given edge of a given cell."""
         return self.cells_edges[k_cell, k_cell_edge]
 
-    def get_edge_nodes_idx(self, k_edge):
-        """Returns the global idx of the nodes of a given edge."""
+    def get_edge_nodes_index(self, k_edge):
+        """Returns the global index of the nodes of a given edge."""
         return self.edges_nodes[k_edge]
 
     def get_edge_node_index(self, k_edge, k_edge_node):

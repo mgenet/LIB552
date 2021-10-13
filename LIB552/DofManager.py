@@ -156,7 +156,7 @@ class DofManager():
                     # print ("k_cell_edge = "+str(k_cell_edge))
                     k_edge = self.mesh.get_cell_edge_index(k_cell, k_cell_edge)
                     # print ("k_edge = "+str(k_edge))
-                    edge_nodes[:] = self.mesh.get_edge_nodes_idx(k_edge)
+                    edge_nodes[:] = self.mesh.get_edge_nodes_index(k_edge)
                     # print ("edge_nodes = "+str(edge_nodes))
                     if (edge_nodes[0] < edge_nodes[1]):
                         k_edge_dof = n_dofs_already_attached_to_cell_edges[k_cell_edge]
