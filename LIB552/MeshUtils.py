@@ -72,7 +72,7 @@ def field_to_ugrid_isoparametric(field, mesh, field_name=None):
     For vector fields, it is assumed that the dof ordering is point-wise.
 
     Args:
-        field (numpy.ndarray of numpy.float): The field (n_dofs x 1).
+        field (numpy.ndarray of float): The field (n_dofs x 1).
         mesh (LIB552.Mesh): The mesh.
 
     Returns:
@@ -108,7 +108,7 @@ def field_to_ugrid(field, mesh, finite_element, dof_manager, field_name=None):
     Only works if all dofs are attached to nodes.
 
     Args:
-        field (numpy.ndarray of numpy.float): The field (n_dofs x 1).
+        field (numpy.ndarray of float): The field (n_dofs x 1).
         mesh (LIB552.Mesh): The mesh.
         finite_element (LIB552.FiniteElement): The finite_element.
         dof_manager (LIB552.DofManager): The dof manager.

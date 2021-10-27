@@ -32,7 +32,7 @@ class DofManager():
         n_dofs (uint): Number of dofs.
         local_to_global (numpy.ndarray of numpy.uint): For each cell and local dof idx, the global dof index (mesh.n_cells x finite_element.n_dofs).
         global_to_local (numpy.ndarray of numpy.uint): For each global dof index, one of the potentially multiple corresponding cell and local dof idx (n_dofs x 2).
-        dofs_coords (numpy.ndarray of numpy.float): For each global dof index, the coordinates (n_dofs x mesh.n_dim).
+        dofs_coords (numpy.ndarray of float): For each global dof index, the coordinates (n_dofs x mesh.n_dim).
     """
     def __init__(self, mesh, finite_element):
         self.mesh = mesh
@@ -193,7 +193,7 @@ class DofManager():
     def set_dofs_coords(self):
         """Sets the dofs coordinates."""
         if (self.global_to_local is None): self.set_inverse_connectivity()
-        self.dofs_coords = numpy.empty((self.n_dofs, self.mesh.dim), dtype=numpy.float)
+        self.dofs_coords = numpy.empty((self.n_dofs, self.mesh.dim), dtype=float)
         self.finite_element.init_get_dofs_coords()
         for k_dof in range(self.n_dofs):
             # print(k_dof)

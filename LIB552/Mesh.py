@@ -96,7 +96,7 @@ class Mesh:
     Attributes:
         dim (uint) {1,2}: Spatial dimension of the mesh (also of nodes position vector).
         n_nodes (uint): The number of nodes.
-        nodes (numpy.ndarray of numpy.float): For each node, the coordinates (n_nodes x dim).
+        nodes (numpy.ndarray of float): For each node, the coordinates (n_nodes x dim).
         n_cells (uint): The number of cells.
         cell (LIB552.Cell): Cell structure.
         cells_nodes (numpy.ndarray of numpy.uint): For each cell, the nodes idx (n_cells x cell.n_nodes).
@@ -381,9 +381,9 @@ def create_quarter_disc_triangular_mesh(
     n_nodes = 1+n_cells_r*(n_cells_c+1)
     nodes = numpy.empty(
         (n_nodes, dim),
-        dtype=numpy.float)
+        dtype=float)
     k_node = 0
-    nodes[k_node,:] = [0,0]
+    nodes[k_node,:] = [0.,0.]
     for k_r in range(1, n_cells_r+1):
         # print("k_r = "+str(k_r))
         r = R * (k_r/n_cells_r)
@@ -391,7 +391,7 @@ def create_quarter_disc_triangular_mesh(
         for k_c in range(0, n_cells_c+1):
             # print("k_c = "+str(k_c))
             theta = (math.pi/2) * (k_c/n_cells_c)
-            # print("theta = "+str(t*180/math.pi))
+            # print("theta = "+str(theta*180/math.pi))
             x = r * math.cos(theta)
             y = r * math.sin(theta)
             k_node = 1 + (k_r-1) * (n_cells_c+1) + k_c
@@ -449,7 +449,7 @@ def create_quarter_disc_quadrangular_mesh(
     # print("n_nodes = "+str(n_nodes))
     nodes = numpy.empty(
         (n_nodes, dim),
-        dtype=numpy.float)
+        dtype=float)
     DeltaR = R/(n_cells_c+n_cells_r)
     for k_y in range(n_cells_c+1):
         y = k_y * DeltaR
