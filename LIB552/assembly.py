@@ -30,7 +30,7 @@ def assemble_vector(
     Args:
         mesh (LIB552.Mesh): The mesh.
         finite_element (LIB552.FiniteElement): The finite element.
-        get_loc_vec (function): The function that computes the local vector.
+        get_loc_vec (function): The function that computes the local/elementary vector.
         dof_manager (LIB552.DofManager): The dof manager.
         vec (numpy.array): The global vector (dof_manager.n_dofs) (if not provided, one will be created).
 
@@ -68,7 +68,7 @@ def assemble_vector_from_edge_integral(
     Args:
         mesh (LIB552.Mesh): The mesh.
         finite_element (LIB552.FiniteElement): The finite element.
-        get_loc_vec (function): The function that computes the local vector.
+        get_loc_vec (function): The function that computes the local/elementary vector.
         dof_manager (LIB552.DofManager): The dof manager.
         imposed_edges_idx (list of uints): List of edges on which to impose the force.
         vec (numpy.array): The global vector (dof_manager.n_dofs) (if not provided, one will be created).
@@ -111,7 +111,7 @@ def assemble_matrix(
     Args:
         mesh (LIB552.Mesh): The mesh.
         finite_element (LIB552.FiniteElement): The finite element.
-        get_loc_mat (function): The function that computes the local matrix.
+        get_loc_mat (function): The function that computes the local/elementary matrix.
         dof_manager (LIB552.DofManager): The dof manager.
         mat (numpy.array): The global matrix (dof_manager.n_dofs x dof_manager.n_dofs) (if not provided, one will be created).
 
@@ -153,8 +153,8 @@ def assemble_system_w_constraints(
     Args:
         mesh (LIB552.Mesh): The mesh.
         finite_element (LIB552.FiniteElement): The finite element.
-        get_loc_mat (function): The function that computes the local matrix.
-        get_loc_vec (function): The function that computes the local vector.
+        get_loc_mat (function): The function that computes the local/elementary matrix.
+        get_loc_vec (function): The function that computes the local/elementary vector.
         dof_manager (LIB552.DofManager): The dof manager.
         prescribed_dofs_idx (list of uints): List of constrained dofs indexes.
         prescribed_dofs_vals (list of floats): List of constrained dofs values.
