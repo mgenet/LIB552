@@ -64,6 +64,8 @@ def mesh_to_ugrid(mesh):
     return ugrid
 
 
+mesh_to_vtk = mesh_to_ugrid
+
 def field_to_ugrid_isoparametric(field, mesh, field_name=None):
     """
     Converts a finite element (scalar or vector) field into a VTK unstructured grid with point data.
@@ -173,4 +175,46 @@ def mesh_from_pygmsh(pygmsh_mesh):
         assert (0), "Cells must be triangles or quandrangles. Aborting."
     cells_nodes = pygmsh_mesh.cells[0].data
     mesh = lib.Mesh(dim, nodes, cell, cells_nodes)
+    return mesh
+
+
+def mesh_from_gmsh(gmsh_mesh):
+    """
+    Converts a gmsh mesh to a LIB552 mesh.
+    Only implemented for 2D meshes, made of triangles.
+
+    Args:
+        gmsh_mesh (gmsh.Mesh): The mesh in gmsh format.
+
+    Returns:
+        mesh (LIB552.Mesh): The mesh in LIB552 format.
+    """
+
+    nodes_ids, nodes_coords, nodes_params = gmsh_mesh.getNodes(dim=2, includeBoundary=True)
+    n_nodes = len(nodes_ids)
+    # print(n_nodes)
+    # print(nodes_ids)
+    # print(nodes_coords)
+    nodes_coords = nodes_coords.reshape((n_nodes, 3))
+    # print(nodes_coords)
+    assert (numpy.allclose(nodes_coords[:,2], 0)), "Mesh must be 2D. Aborting."
+    nodes_coords = nodes_coords[:,:2]
+    # print(nodes_coords)
+
+    elems_types, elems_ids, elems_nodes_ids = gmsh_mesh.getElements(dim=2)
+    if (elems_types[0] == 2):
+        cell = lib.Cell_Triangle()
+    else:
+        assert (0), "Cells must be triangles. Aborting."
+    n_cells = len(elems_ids[0])
+    # print(n_cells)
+    cells_nodes_ids = elems_nodes_ids[0]
+    # print(cells_nodes_ids)
+    sorter = numpy.argsort(nodes_ids)
+    cells_nodes_idx = sorter[numpy.searchsorted(nodes_ids, cells_nodes_ids, sorter=sorter)]
+    # print(cells_nodes_idx)
+    cells_nodes_idx = cells_nodes_idx.reshape((n_cells, cell.n_nodes))
+    # print(cells_nodes_idx)
+
+    mesh = lib.Mesh(dim=2, nodes=nodes_coords, cell=cell, cells_nodes=cells_nodes_idx)
     return mesh
