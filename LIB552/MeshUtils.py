@@ -2,17 +2,16 @@
 
 ################################################################################
 ###                                                                          ###
-### Created by Martin Genet, 2020                                            ###
+### Created by Martin Genet, 2020-2022                                       ###
 ###                                                                          ###
 ### École Polytechnique, Palaiseau, France                                   ###
 ###                                                                          ###
 ################################################################################
 
 
-import math
 import numpy
 import vtk
-import vtk.numpy_interface.dataset_adapter as dsa
+# import vtk.numpy_interface.dataset_adapter as dsa
 
 import LIB552 as lib
 

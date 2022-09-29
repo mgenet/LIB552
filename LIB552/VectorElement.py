@@ -2,7 +2,7 @@
 
 ################################################################################
 ###                                                                          ###
-### Created by Martin Genet, 2020                                            ###
+### Created by Martin Genet, 2020-2022                                       ###
 ###                                                                          ###
 ### École Polytechnique, Palaiseau, France                                   ###
 ###                                                                          ###
@@ -11,7 +11,6 @@
 
 import numpy
 import sympy
-from sympy.integrals.intpoly import polytope_integrate # MG20200501: Why do I need to do that?
 
 import LIB552 as lib
 
