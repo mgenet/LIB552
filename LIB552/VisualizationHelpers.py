@@ -36,7 +36,9 @@ class DolfinPVDReader:
 
 
 class DisplacementViewer:
-    def __init__(self, pvd_folder, pvd_filename):
+    def __init__(self, pvd_folder, pvd_filename, state_label="time"):
+        self._state_label = state_label
+
         self._reader = lib.DolfinPVDReader(pvd_folder, pvd_filename)
         self._U_warp = vtk.vtkWarpVector()
         self._U_warp.SetInputData(self._reader.get_ugrid(0))
@@ -58,10 +60,10 @@ class DisplacementViewer:
         i_slider, f_slider = slider.children[:2]
         
         state_label = ipywidgets.Label(
-            value="time: {:e}".format(self._reader._timesteps[i_slider.value]))
+            value=self._state_label+": {:e}".format(self._reader._timesteps[i_slider.value]))
 
         def _update_label(change):
-            state_label.value = "time: {:e}".format(self._reader._timesteps[int(change["new"])])
+            state_label.value = self._state_label+": {:e}".format(self._reader._timesteps[int(change["new"])])
         
         i_slider.observe(_update_label, names=["value"])
         
@@ -88,7 +90,7 @@ class DisplacementViewer:
         grid.layout.width   = "750px"
         grid.layout.padding =   "0px"
         
-        i_slider.description = "time index"
+        i_slider.description = self._state_label[:4]+" index"
         f_slider.description = "disp factor"
 
         return ipywidgets.VBox([self._viewer, grid])
