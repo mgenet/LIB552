@@ -8,6 +8,7 @@
 ###                                                                          ###
 ################################################################################
 
+import glob
 import ipywidgets
 import itkwidgets
 import xml.etree.ElementTree as ET
@@ -35,11 +36,31 @@ class DolfinPVDReader:
         return myvtk.readUGrid(self.pvd_folder+"/"+self._files[index])
 
 
+class UGridSeriesReader:
+    def __init__(self, ugrids_folder, ugrids_filebasename, ugrids_extension="vtu"):
+        self.ugrids_folder       = ugrids_folder
+        self.ugrids_filebasename = ugrids_filebasename
+        self.ugrids_extension    = ugrids_extension
+
+        self._files = sorted(glob.glob(self.ugrids_folder+"/"+self.ugrids_filebasename+"_[0-9]*."+self.ugrids_extension))
+        assert (len(self._files) > 0), "There must be at least one mesh. Aborting."
+        self._timesteps = range(len(self._files))
+
+    def get_ugrid(self, index):
+        return myvtk.readUGrid(self._files[index])
+
+
 class DisplacementViewer:
-    def __init__(self, pvd_folder, pvd_filename, state_label="time"):
+    def __init__(self, pvd_folder=".", pvd_filename=None, ugrids_folder=".", ugrids_filebasename=None, state_label="time"):
         self._state_label = state_label
 
-        self._reader = lib.DolfinPVDReader(pvd_folder, pvd_filename)
+        if (pvd_filename is not None):
+            self._reader = lib.DolfinPVDReader(pvd_folder, pvd_filename)
+        elif (ugrids_filebasename is not None):
+            self._reader = lib.UGridSeriesReader(ugrids_folder, ugrids_filebasename)
+        else:
+            assert (0), "Need to provide \"pvd_filename\" or \"ugrids_filebasename\". Aborting."
+
         self._U_warp = vtk.vtkWarpVector()
         self._U_warp.SetInputData(self._reader.get_ugrid(0))
         self._U_warp.SetScaleFactor(1.)
